@@ -45,8 +45,7 @@ const config: Config = {
       backgroundImage: {
         'premium-radial':
           'radial-gradient(circle at top left, rgba(59, 130, 246, .28), transparent 34%), radial-gradient(circle at 80% 0%, rgba(34, 211, 238, .18), transparent 30%)',
-        'card-gradient':
-          'linear-gradient(135deg, rgba(59,130,246,.28), rgba(34,211,238,.08))',
+        'card-gradient': 'linear-gradient(135deg, rgba(59,130,246,.28), rgba(34,211,238,.08))',
       },
     },
   },

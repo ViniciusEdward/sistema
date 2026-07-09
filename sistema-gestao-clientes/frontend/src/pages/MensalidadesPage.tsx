@@ -34,13 +34,19 @@ export function MensalidadesPage() {
       setMensalidades(mensalidadesResult.data);
       setTotal(mensalidadesResult.total);
       setClientes(clientesResult.data);
+    } catch {
+      setMensalidades([]);
+      setTotal(0);
+      setClientes([]);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    const id = window.setTimeout(load, 250);
+    const id = window.setTimeout(() => {
+      void load();
+    }, 250);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, status]);
@@ -51,30 +57,42 @@ export function MensalidadesPage() {
   }
 
   async function handleSubmit(input: MensalidadeInput) {
-    if (editing) {
-      await mensalidadesService.update(editing.id, input);
-      toast.success('Mensalidade atualizada.');
-    } else {
-      await mensalidadesService.create(input);
-      toast.success('Mensalidade criada.');
+    try {
+      if (editing) {
+        await mensalidadesService.update(editing.id, input);
+        toast.success('Mensalidade atualizada.');
+      } else {
+        await mensalidadesService.create(input);
+        toast.success('Mensalidade criada.');
+      }
+      setFormOpen(false);
+      await load();
+    } catch {
+      // O toast padronizado já é exibido pelo interceptor da API.
     }
-    setFormOpen(false);
-    await load();
   }
 
   async function remove(mensalidade: Mensalidade) {
     if (!confirm('Excluir esta mensalidade?')) return;
-    await mensalidadesService.remove(mensalidade.id);
-    toast.success('Mensalidade excluída.');
-    await load();
+    try {
+      await mensalidadesService.remove(mensalidade.id);
+      toast.success('Mensalidade excluída.');
+      await load();
+    } catch {
+      // O toast padronizado já é exibido pelo interceptor da API.
+    }
   }
 
   async function confirmPayment(formaPagamento: FormaPagamento) {
     if (!paying) return;
-    await mensalidadesService.pagar(paying.id, { formaPagamento });
-    toast.success('Pagamento confirmado e lançado no caixa.');
-    setPaying(null);
-    await load();
+    try {
+      await mensalidadesService.pagar(paying.id, { formaPagamento });
+      toast.success('Pagamento confirmado e lançado no caixa.');
+      setPaying(null);
+      await load();
+    } catch {
+      // O toast padronizado já é exibido pelo interceptor da API.
+    }
   }
 
   return (
@@ -133,7 +151,7 @@ export function MensalidadesPage() {
                         <button className="btn-secondary px-3" onClick={() => { setEditing(mensalidade); setFormOpen(true); }}><Pencil className="h-4 w-4" /></button>
                       )}
                       {mensalidade.status !== 'PAGO' && (
-                        <button className="btn-secondary px-3 text-neon-red" onClick={() => remove(mensalidade)}><Trash2 className="h-4 w-4" /></button>
+                        <button className="btn-secondary px-3 text-neon-red" onClick={() => void remove(mensalidade)}><Trash2 className="h-4 w-4" /></button>
                       )}
                     </div>
                   </td>

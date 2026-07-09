@@ -26,13 +26,18 @@ export function ClientesPage() {
       const result = await clientesService.list({ search, status, perPage: 50 });
       setClientes(result.data);
       setTotal(result.total);
+    } catch {
+      setClientes([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    const id = window.setTimeout(load, 250);
+    const id = window.setTimeout(() => {
+      void load();
+    }, 250);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, status]);
@@ -43,22 +48,30 @@ export function ClientesPage() {
   }
 
   async function handleSubmit(input: ClienteInput) {
-    if (editing) {
-      await clientesService.update(editing.id, input);
-      toast.success('Cliente atualizado.');
-    } else {
-      await clientesService.create(input);
-      toast.success('Cliente cadastrado.');
+    try {
+      if (editing) {
+        await clientesService.update(editing.id, input);
+        toast.success('Cliente atualizado.');
+      } else {
+        await clientesService.create(input);
+        toast.success('Cliente cadastrado.');
+      }
+      setModalOpen(false);
+      await load();
+    } catch {
+      // O toast padronizado já é exibido pelo interceptor da API.
     }
-    setModalOpen(false);
-    await load();
   }
 
   async function remove(cliente: Cliente) {
     if (!confirm(`Excluir ${cliente.nome}?`)) return;
-    await clientesService.remove(cliente.id);
-    toast.success('Cliente excluído.');
-    await load();
+    try {
+      await clientesService.remove(cliente.id);
+      toast.success('Cliente excluído.');
+      await load();
+    } catch {
+      // O toast padronizado já é exibido pelo interceptor da API.
+    }
   }
 
   return (
@@ -110,7 +123,7 @@ export function ClientesPage() {
                   <td className="px-4 py-4">
                     <div className="flex justify-end gap-2">
                       <button className="btn-secondary px-3" onClick={() => { setEditing(cliente); setModalOpen(true); }}><Pencil className="h-4 w-4" /></button>
-                      <button className="btn-secondary px-3 text-neon-red" onClick={() => remove(cliente)}><Trash2 className="h-4 w-4" /></button>
+                      <button className="btn-secondary px-3 text-neon-red" onClick={() => void remove(cliente)}><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </td>
                 </tr>

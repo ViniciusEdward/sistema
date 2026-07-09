@@ -5,22 +5,23 @@ import { ApiError } from '../utils/ApiError';
 import { authCookieName } from '../utils/cookie';
 
 type AuthJwtPayload = {
-  sub: number;
+  sub: string;
   email: string;
 };
 
 function isAuthJwtPayload(payload: unknown): payload is AuthJwtPayload {
-  if (!payload || typeof payload !== 'object') {
-    return false;
-  }
+  if (!payload || typeof payload !== 'object') return false;
 
   const data = payload as Partial<AuthJwtPayload>;
-
-  return typeof data.sub === 'number' && typeof data.email === 'string';
+  return typeof data.sub === 'string' && typeof data.email === 'string';
 }
 
 export function authMiddleware(req: Request, _res: Response, next: NextFunction) {
-  const token = req.cookies?.[authCookieName];
+  const cookieToken = req.cookies?.[authCookieName];
+  const bearerToken = req.headers.authorization?.startsWith('Bearer ')
+    ? req.headers.authorization.slice('Bearer '.length)
+    : undefined;
+  const token = cookieToken || bearerToken;
 
   if (!token) {
     throw new ApiError(401, 'Sessão expirada ou token ausente. Faça login novamente.');

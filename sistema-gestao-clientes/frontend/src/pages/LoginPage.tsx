@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { LockKeyhole, Mail } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -9,6 +9,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { user, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (user) return <Navigate to="/dashboard" replace />;
 
@@ -17,7 +18,8 @@ export function LoginPage() {
     setLoading(true);
     try {
       await login(email, senha);
-      navigate('/dashboard');
+      const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/dashboard';
+      navigate(redirectTo, { replace: true });
     } finally {
       setLoading(false);
     }
@@ -60,14 +62,14 @@ export function LoginPage() {
               <label className="label">E-mail</label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
-                <input className="input pl-11" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@sistema.local" required />
+                <input className="input pl-11" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@sistema.local" autoComplete="email" required />
               </div>
             </div>
             <div>
               <label className="label">Senha</label>
               <div className="relative">
                 <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-app-muted" />
-                <input className="input pl-11" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="••••••••" required />
+                <input className="input pl-11" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="••••••••" autoComplete="current-password" required />
               </div>
             </div>
             <button className="btn-primary mt-2 h-12" disabled={loading}>{loading ? 'Entrando...' : 'Acessar painel'}</button>

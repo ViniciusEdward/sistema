@@ -29,28 +29,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async function loadSession() {
       try {
         const usuario = await authService.me();
-
-        if (active) {
-          setUser(usuario);
-        }
+        if (active) setUser(usuario);
       } catch {
-        if (active) {
-          setUser(null);
-        }
+        if (active) setUser(null);
       } finally {
         window.clearTimeout(timeout);
-
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
 
+    function handleUnauthorized() {
+      setUser(null);
+      setLoading(false);
+    }
+
+    window.addEventListener('sgc:unauthorized', handleUnauthorized);
     loadSession();
 
     return () => {
       active = false;
       window.clearTimeout(timeout);
+      window.removeEventListener('sgc:unauthorized', handleUnauthorized);
     };
   }, []);
 
@@ -59,13 +58,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       loading,
       async login(email, senha) {
-        const usuario = await authService.login(email, senha);
+        await authService.login(email, senha);
+        const usuario = await authService.me();
         setUser(usuario);
         toast.success('Login realizado com sucesso.');
       },
       async logout() {
-        await authService.logout();
-        setUser(null);
+        try {
+          await authService.logout();
+        } finally {
+          setUser(null);
+        }
       },
     }),
     [user],

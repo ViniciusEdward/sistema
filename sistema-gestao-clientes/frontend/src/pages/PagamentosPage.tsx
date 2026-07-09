@@ -14,10 +14,28 @@ export function PagamentosPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    pagamentosService.list({ perPage: 50 }).then((result) => {
-      setPagamentos(result.data);
-      setTotal(result.total);
-    }).finally(() => setLoading(false));
+    let active = true;
+
+    async function load() {
+      try {
+        const result = await pagamentosService.list({ perPage: 50 });
+        if (!active) return;
+        setPagamentos(result.data);
+        setTotal(result.total);
+      } catch {
+        if (!active) return;
+        setPagamentos([]);
+        setTotal(0);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    void load();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
