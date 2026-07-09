@@ -17,11 +17,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    authService
-      .me()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+    let active = true;
+
+    const timeout = window.setTimeout(() => {
+      if (active) {
+        setUser(null);
+        setLoading(false);
+      }
+    }, 8000);
+
+    async function loadSession() {
+      try {
+        const usuario = await authService.me();
+
+        if (active) {
+          setUser(usuario);
+        }
+      } catch {
+        if (active) {
+          setUser(null);
+        }
+      } finally {
+        window.clearTimeout(timeout);
+
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadSession();
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -46,6 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth precisa estar dentro do AuthProvider.');
+
+  if (!context) {
+    throw new Error('useAuth precisa estar dentro do AuthProvider.');
+  }
+
   return context;
 }
