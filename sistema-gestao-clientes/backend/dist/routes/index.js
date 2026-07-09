@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.routes = void 0;
+const express_1 = require("express");
+const authRoutes_1 = require("./authRoutes");
+const clientesRoutes_1 = require("./clientesRoutes");
+const dashboardRoutes_1 = require("./dashboardRoutes");
+const mensalidadesRoutes_1 = require("./mensalidadesRoutes");
+const pagamentosRoutes_1 = require("./pagamentosRoutes");
+const authMiddleware_1 = require("../middlewares/authMiddleware");
+exports.routes = (0, express_1.Router)();
+exports.routes.use('/auth', authRoutes_1.authRoutes);
+exports.routes.use('/dashboard', authMiddleware_1.authMiddleware, dashboardRoutes_1.dashboardRoutes);
+exports.routes.use('/clientes', authMiddleware_1.authMiddleware, clientesRoutes_1.clientesRoutes);
+exports.routes.use('/mensalidades', authMiddleware_1.authMiddleware, mensalidadesRoutes_1.mensalidadesRoutes);
+exports.routes.use('/pagamentos', authMiddleware_1.authMiddleware, pagamentosRoutes_1.pagamentosRoutes);

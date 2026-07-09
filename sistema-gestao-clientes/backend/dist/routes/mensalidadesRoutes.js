@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.mensalidadesRoutes = void 0;
+const express_1 = require("express");
+const mensalidadesController_1 = require("../controllers/mensalidadesController");
+const asyncHandler_1 = require("../utils/asyncHandler");
+exports.mensalidadesRoutes = (0, express_1.Router)();
+exports.mensalidadesRoutes.get('/', (0, asyncHandler_1.asyncHandler)(mensalidadesController_1.mensalidadesController.list));
+exports.mensalidadesRoutes.get('/:id', (0, asyncHandler_1.asyncHandler)(mensalidadesController_1.mensalidadesController.getById));
+exports.mensalidadesRoutes.post('/', (0, asyncHandler_1.asyncHandler)(mensalidadesController_1.mensalidadesController.create));
+exports.mensalidadesRoutes.put('/:id', (0, asyncHandler_1.asyncHandler)(mensalidadesController_1.mensalidadesController.update));
+exports.mensalidadesRoutes.delete('/:id', (0, asyncHandler_1.asyncHandler)(mensalidadesController_1.mensalidadesController.remove));
+exports.mensalidadesRoutes.post('/:id/pagar', (0, asyncHandler_1.asyncHandler)(mensalidadesController_1.mensalidadesController.pagar));

@@ -7,8 +7,19 @@ export const authController = {
   async login(req: Request, res: Response) {
     const data = loginSchema.parse(req.body);
     const result = await authService.login(data.email, data.senha);
+
+    // Mantém o cookie httpOnly para navegadores que aceitam cookies normalmente.
     res.cookie(authCookieName, result.token, getAuthCookieOptions());
-    return res.json({ success: true, data: result.usuario });
+
+    // Também retorna o token para fallback mobile. Alguns navegadores móveis bloqueiam
+    // cookies em fluxos com proxy/rewrite, então o frontend envia Authorization Bearer.
+    return res.json({
+      success: true,
+      data: {
+        usuario: result.usuario,
+        token: result.token,
+      },
+    });
   },
 
   async me(req: Request, res: Response) {
