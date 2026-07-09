@@ -28,8 +28,25 @@ export function errorMiddleware(err: unknown, _req: Request, res: Response, _nex
     if (err.code === 'P2002') {
       return res.status(409).json({ success: false, message: 'Registro duplicado.' });
     }
+    if (err.code === 'P2003') {
+      return res.status(409).json({
+        success: false,
+        message: 'Este registro possui vínculos e não pode ser alterado dessa forma.',
+      });
+    }
     if (err.code === 'P2025') {
       return res.status(404).json({ success: false, message: 'Registro não encontrado.' });
+    }
+  }
+
+  if (err instanceof Prisma.PrismaClientInitializationError) {
+    const message = err.message || '';
+    if (message.includes('max_user_connections')) {
+      return res.status(503).json({
+        success: false,
+        message:
+          'O banco atingiu o limite de conexões. Feche phpMyAdmin/Workbench e tente novamente em alguns minutos.',
+      });
     }
   }
 

@@ -36,16 +36,17 @@ function whereFromFilters(filters: MensalidadeListFilters): Prisma.MensalidadeWh
 export const mensalidadesRepository = {
   async list(filters: MensalidadeListFilters) {
     const where = whereFromFilters(filters);
-    const [data, total] = await Promise.all([
-      prisma.mensalidade.findMany({
-        where,
-        include: { cliente: true, pagamento: true },
-        orderBy: [{ vencimento: 'asc' }, { id: 'desc' }],
-        skip: (filters.page - 1) * filters.perPage,
-        take: filters.perPage,
-      }),
-      prisma.mensalidade.count({ where }),
-    ]);
+
+    // Sequencial para respeitar bancos MySQL com limite baixo de conexões.
+    const data = await prisma.mensalidade.findMany({
+      where,
+      include: { cliente: true, pagamento: true },
+      orderBy: [{ vencimento: 'asc' }, { id: 'desc' }],
+      skip: (filters.page - 1) * filters.perPage,
+      take: filters.perPage,
+    });
+
+    const total = await prisma.mensalidade.count({ where });
 
     return { data, total };
   },
@@ -53,7 +54,7 @@ export const mensalidadesRepository = {
   findById(id: number) {
     return prisma.mensalidade.findUnique({
       where: { id },
-      include: { cliente: true, pagamento: true },
+      include: { cliente: true, pagamento: true, caixaTransacao: true },
     });
   },
 

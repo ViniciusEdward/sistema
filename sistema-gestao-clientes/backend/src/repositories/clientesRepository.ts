@@ -25,21 +25,32 @@ function whereFromFilters(filters: ClienteListFilters): Prisma.ClienteWhereInput
 export const clientesRepository = {
   async list(filters: ClienteListFilters) {
     const where = whereFromFilters(filters);
-    const [data, total] = await Promise.all([
-      prisma.cliente.findMany({
-        where,
-        orderBy: { nome: 'asc' },
-        skip: (filters.page - 1) * filters.perPage,
-        take: filters.perPage,
-      }),
-      prisma.cliente.count({ where }),
-    ]);
+
+    // Sequencial para respeitar bancos MySQL com limite baixo de conexões.
+    const data = await prisma.cliente.findMany({
+      where,
+      orderBy: { nome: 'asc' },
+      skip: (filters.page - 1) * filters.perPage,
+      take: filters.perPage,
+    });
+
+    const total = await prisma.cliente.count({ where });
 
     return { data, total };
   },
 
   findById(id: number) {
-    return prisma.cliente.findUnique({ where: { id } });
+    return prisma.cliente.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            mensalidades: true,
+            pagamentos: true,
+          },
+        },
+      },
+    });
   },
 
   create(data: Prisma.ClienteCreateInput) {
@@ -50,7 +61,33 @@ export const clientesRepository = {
     return prisma.cliente.update({ where: { id }, data });
   },
 
-  remove(id: number) {
-    return prisma.cliente.delete({ where: { id } });
+  async removeWithDependencies(id: number) {
+    return prisma.$transaction(async (tx) => {
+      const mensalidades = await tx.mensalidade.findMany({
+        where: { clienteId: id },
+        select: { id: true },
+      });
+
+      const mensalidadeIds = mensalidades.map((mensalidade) => mensalidade.id);
+
+      if (mensalidadeIds.length > 0) {
+        await tx.caixaTransacao.deleteMany({
+          where: { mensalidadeId: { in: mensalidadeIds } },
+        });
+
+        await tx.pagamento.deleteMany({
+          where: { mensalidadeId: { in: mensalidadeIds } },
+        });
+
+        await tx.mensalidade.deleteMany({
+          where: { id: { in: mensalidadeIds } },
+        });
+      }
+
+      // Garante remoção de pagamentos órfãos por cliente, caso existam por inconsistência antiga.
+      await tx.pagamento.deleteMany({ where: { clienteId: id } });
+
+      return tx.cliente.delete({ where: { id } });
+    });
   },
 };

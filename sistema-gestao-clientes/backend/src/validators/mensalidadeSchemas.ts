@@ -8,7 +8,7 @@ export const mensalidadeCreateSchema = z.object({
   competencia: isoDate,
   vencimento: isoDate,
   valor: z.coerce.number().min(0),
-  status: z.enum(['PENDENTE', 'PAGO', 'ATRASADO', 'CANCELADO']).default('PENDENTE'),
+  status: z.enum(['PENDENTE', 'ATRASADO', 'CANCELADO']).default('PENDENTE'),
   observacoes: z.string().trim().optional().nullable(),
 });
 

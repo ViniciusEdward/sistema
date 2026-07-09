@@ -57,7 +57,7 @@ export const clientesService = {
 
   async remove(id: number) {
     await this.getById(id);
-    await clientesRepository.remove(id);
+    await clientesRepository.removeWithDependencies(id);
     return { deleted: true };
   },
 };

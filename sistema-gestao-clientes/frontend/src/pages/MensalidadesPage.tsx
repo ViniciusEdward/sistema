@@ -27,10 +27,9 @@ export function MensalidadesPage() {
   async function load() {
     setLoading(true);
     try {
-      const [mensalidadesResult, clientesResult] = await Promise.all([
-        mensalidadesService.list({ search, status, perPage: 50 }),
-        clientesService.list({ perPage: 100, status: 'ATIVO' }),
-      ]);
+      // Carregamento sequencial para evitar picos de conexões no MySQL do Clever Cloud.
+      const mensalidadesResult = await mensalidadesService.list({ search, status, perPage: 50 });
+      const clientesResult = await clientesService.list({ perPage: 100, status: 'ATIVO' });
       setMensalidades(mensalidadesResult.data);
       setTotal(mensalidadesResult.total);
       setClientes(clientesResult.data);

@@ -30,7 +30,7 @@ export const mensalidadesService = {
     competencia: string;
     vencimento: string;
     valor: number;
-    status: MensalidadeStatus;
+    status: Exclude<MensalidadeStatus, 'PAGO'>;
     observacoes?: string | null;
   }) {
     const cliente = await clientesRepository.findById(input.clienteId);
