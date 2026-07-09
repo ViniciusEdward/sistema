@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id         Int      @id @default(autoincrement())
+  nome       String   @default("Administrador") @db.VarChar(120)
+  email      String   @unique @db.VarChar(180)
+  senhaHash  String   @map("senha_hash") @db.VarChar(255)
+  ativo      Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@map("usuarios")
+}
+
+model Cliente {
+  id             Int            @id @default(autoincrement())
+  nome           String         @db.VarChar(160)
+  telefone       String?        @db.VarChar(30)
+  diaPagamento   Int            @map("dia_pagamento") @db.SmallInt
+  valor          Decimal        @db.Decimal(12, 2)
+  status         ClienteStatus  @default(ATIVO)
+  observacoes    String?
+  dataCadastro   DateTime       @default(dbgenerated("(CURRENT_DATE)")) @map("data_cadastro") @db.Date
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  mensalidades   Mensalidade[]
+  pagamentos     Pagamento[]
+
+  @@map("clientes")
+}
+
+model Mensalidade {
+  id              Int                @id @default(autoincrement())
+  clienteId       Int                @map("cliente_id")
+  competencia     DateTime           @db.Date
+  vencimento      DateTime           @db.Date
+  valor           Decimal            @db.Decimal(12, 2)
+  status          MensalidadeStatus  @default(PENDENTE)
+  pagoEm          DateTime?          @map("pago_em") @db.Timestamp(6)
+  formaPagamento  FormaPagamento?    @map("forma_pagamento")
+  observacoes     String?
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  cliente         Cliente            @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  pagamento       Pagamento?
+  caixaTransacao  CaixaTransacao?
+
+  @@unique([clienteId, competencia], map: "mensalidades_cliente_competencia_unique")
+  @@map("mensalidades")
+}
+
+model Pagamento {
+  id              Int             @id @default(autoincrement())
+  mensalidadeId   Int             @unique @map("mensalidade_id")
+  clienteId       Int             @map("cliente_id")
+  valor           Decimal         @db.Decimal(12, 2)
+  pagoEm          DateTime        @default(now()) @map("pago_em") @db.Timestamp(6)
+  formaPagamento  FormaPagamento  @map("forma_pagamento")
+  observacao      String?
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  mensalidade     Mensalidade     @relation(fields: [mensalidadeId], references: [id], onDelete: Restrict)
+  cliente         Cliente         @relation(fields: [clienteId], references: [id], onDelete: Restrict)
+
+  @@map("pagamentos")
+}
+
+model CaixaTransacao {
+  id             Int          @id @default(autoincrement())
+  tipo           CaixaTipo
+  origem         CaixaOrigem
+  descricao      String       @db.VarChar(220)
+  valor          Decimal      @db.Decimal(12, 2)
+  dataTransacao  DateTime     @default(dbgenerated("(CURRENT_DATE)")) @map("data_transacao") @db.Date
+  mensalidadeId  Int?         @unique @map("mensalidade_id")
+  despesaId      Int?         @unique @map("despesa_id")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  mensalidade    Mensalidade? @relation(fields: [mensalidadeId], references: [id], onDelete: SetNull)
+  despesa        Despesa?     @relation(fields: [despesaId], references: [id], onDelete: SetNull)
+
+  @@map("caixa_transacoes")
+}
+
+model CategoriaDespesa {
+  id        Int       @id @default(autoincrement())
+  nome      String    @unique @db.VarChar(120)
+  cor       String    @default("#3B82F6") @db.VarChar(20)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  despesas  Despesa[]
+
+  @@map("categorias_despesa")
+}
+
+model Despesa {
+  id          Int               @id @default(autoincrement())
+  categoriaId Int?              @map("categoria_id")
+  destino     String            @db.VarChar(160)
+  valor       Decimal           @db.Decimal(12, 2)
+  data        DateTime          @default(dbgenerated("(CURRENT_DATE)")) @db.Date
+  observacao  String?
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  categoria   CategoriaDespesa? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  caixaTransacao CaixaTransacao?
+
+  @@map("despesas")
+}
+
+enum ClienteStatus {
+  ATIVO
+  INATIVO
+  INADIMPLENTE
+}
+
+enum MensalidadeStatus {
+  PENDENTE
+  PAGO
+  ATRASADO
+  CANCELADO
+}
+
+enum FormaPagamento {
+  PIX
+  DINHEIRO
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  BOLETO
+  TRANSFERENCIA
+  OUTRO
+}
+
+enum CaixaTipo {
+  ENTRADA
+  SAIDA
+}
+
+enum CaixaOrigem {
+  MENSALIDADE
+  DESPESA
+  AJUSTE
+}
