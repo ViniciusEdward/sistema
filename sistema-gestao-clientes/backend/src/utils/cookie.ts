@@ -1,15 +1,27 @@
 import { CookieOptions } from 'express';
 import { env } from '../config/env';
 
-export const authCookieName = 'sgc_token';
+export const authCookieName = 'sistema_gestao_token';
 
 export function getAuthCookieOptions(): CookieOptions {
+  const isProduction = env.NODE_ENV === 'production';
+
   return {
     httpOnly: true,
-    secure: env.COOKIE_SECURE,
-    sameSite: env.COOKIE_SECURE ? 'none' : 'lax',
-    domain: env.COOKIE_DOMAIN || undefined,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/',
-    maxAge: 1000 * 60 * 60 * 24 * 7,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+}
+
+export function getClearCookieOptions(): CookieOptions {
+  const isProduction = env.NODE_ENV === 'production';
+
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
   };
 }
