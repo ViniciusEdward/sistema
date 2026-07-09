@@ -1,10 +1,17 @@
 import { api } from './api';
 import { ApiDataResponse, Usuario } from '../types';
+import { clearAccessToken, setAccessToken } from './tokenStorage';
+
+type LoginResponse = {
+  usuario: Usuario;
+  token: string;
+};
 
 export const authService = {
   async login(email: string, senha: string) {
-    const { data } = await api.post<ApiDataResponse<Usuario>>('/auth/login', { email, senha });
-    return data.data;
+    const { data } = await api.post<ApiDataResponse<LoginResponse>>('/auth/login', { email, senha });
+    setAccessToken(data.data.token);
+    return data.data.usuario;
   },
 
   async me() {
@@ -13,6 +20,10 @@ export const authService = {
   },
 
   async logout() {
-    await api.post('/auth/logout');
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      clearAccessToken();
+    }
   },
 };

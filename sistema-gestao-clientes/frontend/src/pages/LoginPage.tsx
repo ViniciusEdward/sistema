@@ -76,7 +76,7 @@ export function LoginPage() {
           </form>
 
           <div className="mt-6 rounded-2xl border border-app-border/10 bg-app-surface-strong/50 p-4 text-xs leading-5 text-app-muted">
-            Segurança: o JWT fica em cookie httpOnly, mais seguro contra XSS que localStorage. No deploy em domínios diferentes, o cookie usa SameSite=None + Secure.
+            Segurança: o sistema usa cookie httpOnly e fallback com token Bearer para evitar bloqueio de login em navegadores móveis.
           </div>
         </div>
       </section>

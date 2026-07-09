@@ -1,6 +1,7 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { authService } from '../services/authService';
+import { clearAccessToken } from '../services/tokenStorage';
 import { Usuario } from '../types';
 
 type AuthContextValue = {
@@ -39,12 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     function handleUnauthorized() {
+      clearAccessToken();
       setUser(null);
       setLoading(false);
     }
 
     window.addEventListener('sgc:unauthorized', handleUnauthorized);
-    loadSession();
+    void loadSession();
 
     return () => {
       active = false;
@@ -58,8 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       loading,
       async login(email, senha) {
-        await authService.login(email, senha);
-        const usuario = await authService.me();
+        const usuario = await authService.login(email, senha);
         setUser(usuario);
         toast.success('Login realizado com sucesso.');
       },
@@ -67,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           await authService.logout();
         } finally {
+          clearAccessToken();
           setUser(null);
         }
       },

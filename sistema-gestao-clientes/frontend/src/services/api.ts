@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast';
+import { clearAccessToken, getAccessToken } from './tokenStorage';
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
 let isHandlingUnauthorized = false;
@@ -11,6 +12,12 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = getAccessToken();
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
   return config;
 });
 
@@ -25,6 +32,7 @@ api.interceptors.response.use(
 
       if (!isAuthCheck && !isHandlingUnauthorized) {
         isHandlingUnauthorized = true;
+        clearAccessToken();
         window.dispatchEvent(new Event('sgc:unauthorized'));
         toast.error('Sessão expirada. Faça login novamente.');
         window.setTimeout(() => {
